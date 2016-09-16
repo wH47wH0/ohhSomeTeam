@@ -19,23 +19,13 @@ class Inventory(sge.dsp.Object):
     def __init__(self):
         sprite = sge.gfx.Sprite(width=20, height=20, origin_x=4, origin_y=4)
         sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color(self.color))
-        super().__init__(0, 0, sprite=sprite)
+        super().__init__(0, 0, sprite=sprite, checks_collisions=False)
 
+        # TODO: fix this, to be random at the whole screen
         self.x = random.randint(300,600)
         self.y = random.randint(200,400)
 
-    def event_create(self):
-        pass
-
-    def event_step(self, time_passed, delta_mult):
-        pass
-
-    def event_collision(self, other, x_direction, y_direction):
-        if isinstance(other, Ball):
-            bounce_sound.play()
-            self.destroy()
-
-    def activate():
+    def activate(self):
         raise NotImplementedError
 
 
@@ -105,11 +95,11 @@ class Player(sge.dsp.Object):
 
     score = 0
 
-    def __init__(self, player, sprite):
-        self.player = player
+    def __init__(self, index, sprite):
+        self.index = index
         self.inventories = []
 
-        if player == 1:
+        if index == 0:
             self.joystick = 0
             self.up_key = "w"
             self.down_key = "s"
@@ -170,12 +160,12 @@ class Ball(sge.dsp.Object):
     def event_step(self, time_passed, delta_mult):
         # Scoring
         if self.bbox_right < 0:
-            player2.score += 1
+            players[1].score += 1
             refresh_hud()
             score_sound.play()
             self.serve(-1)
         elif self.bbox_left > sge.game.current_room.width:
-            player1.score += 1
+            players[0].score += 1
             refresh_hud()
             score_sound.play()
             self.serve(1)
@@ -202,9 +192,15 @@ class Ball(sge.dsp.Object):
             self.yvelocity += (self.y - other.y) * PADDLE_VERTICAL_FORCE
 
             # updating the last player on ball, so that it will know who to add the invetory if collided with
-            self.last_player = other.player
+            self.last_player_index = other.index
 
             bounce_sound.play()
+        elif isinstance(other, Inventory):
+            players[self.last_player_index].inventories.append(other)
+            print(players[self.last_player_index].inventories)
+            bounce_sound.play()
+            other.destroy()
+
 
     def serve(self, direction=None):
         global game_in_progress
@@ -215,8 +211,8 @@ class Ball(sge.dsp.Object):
         self.x = self.xstart
         self.y = self.ystart
 
-        if (player1.score < POINTS_TO_WIN and
-                player2.score < POINTS_TO_WIN):
+        if (players[0].score < POINTS_TO_WIN and
+                players[1].score < POINTS_TO_WIN):
             # Next round
             self.xvelocity = BALL_START_SPEED * direction
             self.yvelocity = 0
@@ -226,8 +222,8 @@ class Ball(sge.dsp.Object):
             self.yvelocity = 0
             hud_sprite.draw_clear()
             x = hud_sprite.width / 2
-            p1text = "WIN" if player1.score > player2.score else "LOSE"
-            p2text = "WIN" if player2.score > player1.score else "LOSE"
+            p1text = "WIN" if players[0].score > players[1].score else "LOSE"
+            p2text = "WIN" if players[1].score > players[0].score else "LOSE"
             hud_sprite.draw_text(hud_font, p1text, x - TEXT_OFFSET,
                                  TEXT_OFFSET, color=sge.gfx.Color("red"),
                                  halign="right", valign="top")
@@ -238,22 +234,20 @@ class Ball(sge.dsp.Object):
 
 
 def create_room():
-    global player1
-    global player2
-    player1 = Player(1, paddle_sprite)
-    player2 = Player(2, paddle_sprite)
+    global players
+    players = [Player(0, paddle_sprite), Player(1, paddle_sprite)]
     ball = Ball(ball_sprite)
-    return sge.dsp.Room([player1, player2, ball], background=background)
+    return sge.dsp.Room([players[0], players[1], ball], background=background)
 
 
 def refresh_hud():
     # This fixes the HUD sprite so that it displays the correct score.
     hud_sprite.draw_clear()
     x = hud_sprite.width / 2
-    hud_sprite.draw_text(hud_font, str(player1.score), x - TEXT_OFFSET,
+    hud_sprite.draw_text(hud_font, str(players[0].score), x - TEXT_OFFSET,
                          TEXT_OFFSET, color=sge.gfx.Color("red"),
                          halign="right", valign="top")
-    hud_sprite.draw_text(hud_font, str(player2.score), x + TEXT_OFFSET,
+    hud_sprite.draw_text(hud_font, str(players[1].score), x + TEXT_OFFSET,
                          TEXT_OFFSET, color=sge.gfx.Color("red"),
                          halign="left", valign="top")
 

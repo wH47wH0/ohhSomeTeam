@@ -86,7 +86,6 @@ class Player(sge.dsp.Object):
                       sge.keyboard.get_pressed(self.up_key))
         axis_motion = sge.joystick.get_axis(self.joystick, 1)
 
-
         if (abs(axis_motion) > abs(key_motion) and
                 abs(axis_motion) > abs(self.trackball_motion)):
             self.yvelocity = axis_motion * PADDLE_SPEED
@@ -98,8 +97,8 @@ class Player(sge.dsp.Object):
         self.trackball_motion = 0
 
         # Keep the paddle inside the window
-        if self.bbox_top < HUD_HEIGHT:
-            self.bbox_top = HUD_HEIGHT
+        if self.bbox_top < HUD_HEIGHT + 8:
+            self.bbox_top = HUD_HEIGHT + 8
         elif self.bbox_bottom > sge.game.current_room.height:
             self.bbox_bottom = sge.game.current_room.height
 
@@ -136,8 +135,8 @@ class Ball(sge.dsp.Object):
             self.bbox_bottom = sge.game.current_room.height
             self.yvelocity = -abs(self.yvelocity)
             bounce_wall_sound.play()
-        elif self.bbox_top < HUD_HEIGHT:
-            self.bbox_top = HUD_HEIGHT
+        elif self.bbox_top < HUD_HEIGHT + 8:
+            self.bbox_top = HUD_HEIGHT + 8
             self.yvelocity = abs(self.yvelocity)
             bounce_wall_sound.play()
 
@@ -210,26 +209,27 @@ Game(width=1280, height=1080, fps=120, window_text="Pong")
 
 # Load sprites
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
+central_line_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
-hud_line_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
 inventory_line_vertical_sprite = sge.gfx.Sprite(width=4, height=80, origin_x=4, origin_y=4)
 inventory_line_horizontal_sprite = sge.gfx.Sprite(width=200, height=4, origin_x=4, origin_y=4)
 hud_sprite = sge.gfx.Sprite(width=320, height=120, origin_x=160, origin_y=0)
 
 paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
-                             fill=sge.gfx.Color("red"))
+                             fill=sge.gfx.Color("#AFFF00"))
+central_line_sprite.draw_rectangle(0, 0, central_line_sprite.width, central_line_sprite.height,
+                                   fill=sge.gfx.Color("red"))
 ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,
-                           fill=sge.gfx.Color("white"))
-hud_line_sprite.draw_rectangle(0, 0, hud_line_sprite.width, hud_line_sprite.height,
-                               fill=sge.gfx.Color("#00FF7F"))
+                           fill=sge.gfx.Color("#AFFF00"))
 inventory_line_vertical_sprite.draw_rectangle(0, 0, inventory_line_vertical_sprite.width,
-                                              inventory_line_vertical_sprite.height, fill=sge.gfx.Color("#00FF7F"))
+                                              inventory_line_vertical_sprite.height, fill=sge.gfx.Color("red"))
 inventory_line_horizontal_sprite.draw_rectangle(0, 0, inventory_line_horizontal_sprite.width,
-                                              inventory_line_horizontal_sprite.height, fill=sge.gfx.Color("#00FF7F"))
+                                                inventory_line_horizontal_sprite.height, fill=sge.gfx.Color("red"))
 
 # Load backgrounds
 layers = []
-lines_x_long = [4, 104, 204, sge.game.width, sge.game.width-100, sge.game.width-200]
+lines_x_long = [4, 54, 104, 154, 204, sge.game.width, sge.game.width-50, sge.game.width-100, sge.game.width-150,
+                sge.game.width-200]
 lines_x_short = []
 for i in lines_x_long:
     layer = sge.gfx.BackgroundLayer(inventory_line_vertical_sprite, i, 4, -10000)
@@ -238,12 +238,13 @@ for i in lines_x_short:
     layer = sge.gfx.BackgroundLayer(inventory_line_vertical_sprite, i, 4, -10000)
     layers.append(layer)
 
-layers.append(sge.gfx.BackgroundLayer(inventory_line_horizontal_sprite, 4, 40, -10000))
+layers.append(sge.gfx.BackgroundLayer(inventory_line_horizontal_sprite, 4, 46, -10000))
 layers.append(sge.gfx.BackgroundLayer(inventory_line_horizontal_sprite,
-                                      sge.game.width - inventory_line_horizontal_sprite.width, 40, -10000))
-layers.append(sge.gfx.BackgroundLayer(paddle_sprite, sge.game.width / 2, 0, -10000,
-                                  repeat_up=True, repeat_down=True))
-layers.append(sge.gfx.BackgroundLayer(hud_line_sprite, 0, HUD_HEIGHT, -10000, repeat_right=True))
+                                      sge.game.width - inventory_line_horizontal_sprite.width, 46, -10000))
+layers.append(sge.gfx.BackgroundLayer(central_line_sprite, sge.game.width / 2, 0, -10000,
+                                      repeat_up=True, repeat_down=True))
+layers.append(sge.gfx.BackgroundLayer(central_line_sprite, 0, HUD_HEIGHT + 24, -10000, repeat_right=True))
+layers.append(sge.gfx.BackgroundLayer(central_line_sprite, 0, 24, -10000, repeat_right=True))
 background = sge.gfx.Background(layers, sge.gfx.Color("#4B0082"))
 
 

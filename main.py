@@ -4,13 +4,14 @@ import sge
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
 PADDLE_XOFFSET = 32
-PADDLE_SPEED = 4
+PADDLE_SPEED = 6
 PADDLE_VERTICAL_FORCE = 1 / 12
-BALL_START_SPEED = 2
-BALL_ACCELERATION = 0.2
-BALL_MAX_SPEED = 15
+BALL_START_SPEED = 5
+BALL_ACCELERATION = 0.5
+BALL_MAX_SPEED = 40
 POINTS_TO_WIN = 10
 TEXT_OFFSET = 16
+HUD_HEIGHT = 80
 
 game_in_progress = True
 
@@ -96,8 +97,8 @@ class Player(sge.dsp.Object):
         self.trackball_motion = 0
 
         # Keep the paddle inside the window
-        if self.bbox_top < 0:
-            self.bbox_top = 0
+        if self.bbox_top < HUD_HEIGHT:
+            self.bbox_top = HUD_HEIGHT
         elif self.bbox_bottom > sge.game.current_room.height:
             self.bbox_bottom = sge.game.current_room.height
 
@@ -134,8 +135,8 @@ class Ball(sge.dsp.Object):
             self.bbox_bottom = sge.game.current_room.height
             self.yvelocity = -abs(self.yvelocity)
             bounce_wall_sound.play()
-        elif self.bbox_top < 0:
-            self.bbox_top = 0
+        elif self.bbox_top < HUD_HEIGHT:
+            self.bbox_top = HUD_HEIGHT
             self.yvelocity = abs(self.yvelocity)
             bounce_wall_sound.play()
 
@@ -204,21 +205,27 @@ def refresh_hud():
 
 
 # Create Game object
-Game(width=640, height=480, fps=120, window_text="Pong")
+Game(width=1280, height=1080, fps=120, window_text="Pong")
 
 # Load sprites
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
+hud_line_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
 paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
-                             fill=sge.gfx.Color("white"))
+                             fill=sge.gfx.Color("red"))
 ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,
                            fill=sge.gfx.Color("white"))
+hud_line_sprite.draw_rectangle(0, 0, hud_line_sprite.width, hud_line_sprite.height,
+                           fill=sge.gfx.Color("#00FF7F"))
 hud_sprite = sge.gfx.Sprite(width=320, height=120, origin_x=160, origin_y=0)
 
 # Load backgrounds
 layers = [sge.gfx.BackgroundLayer(paddle_sprite, sge.game.width / 2, 0, -10000,
-                                  repeat_up=True, repeat_down=True)]
-background = sge.gfx.Background(layers, sge.gfx.Color("black"))
+                                  repeat_up=True, repeat_down=True),
+          sge.gfx.BackgroundLayer(hud_line_sprite, sge.game.width / 2, HUD_HEIGHT, -10000,
+                                  repeat_left=True, repeat_right=True)
+          ]
+background = sge.gfx.Background(layers, sge.gfx.Color("#4B0082"))
 
 # Load fonts
 hud_font = sge.gfx.Font("Droid Sans Mono", size=48)

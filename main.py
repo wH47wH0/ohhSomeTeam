@@ -6,7 +6,7 @@ DATA = os.path.join(os.path.dirname(__file__), "data")
 PADDLE_XOFFSET = 32
 PADDLE_SPEED = 4
 PADDLE_VERTICAL_FORCE = 1 / 12
-BALL_START_SPEED = 5
+BALL_START_SPEED = 2
 BALL_ACCELERATION = 0.2
 BALL_MAX_SPEED = 15
 POINTS_TO_WIN = 10
@@ -26,55 +26,20 @@ class Inventory(sge.dsp.Object):
         self.x = random.randint(300, 600)
         self.y = random.randint(200, 400)
 
-    def activate(self, player_index):
-        raise NotImplementedError
-
 
 class ShrinkPaddleInventory(Inventory):
-
     color = "red"
 
-    def activate(self, player_index):
-        if player_index == 1:
-            player_index = 0
-        else:
-            player_index = 1
-
-        players[player_index].sprite.height -= 10
-        players[player_index].bbox_height -= 10
 
 class GrowPaddleInventory(Inventory):
-
     color = "blue"
 
-    def activate(self, player_index):
-        players[player_index].sprite.height += 10
-        players[player_index].bbox_height += 10
-
-
-class MultipleBallInventory(Inventory):
-
-    color = "yellow"
-
-    def activate(self, player_index):
-        sge.game.start_room.add(Ball(ball_sprite))
-
-
-class AccelarateBallInvantory(Inventory):
-
-    color = "green"
-
-INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory, MultipleBallInventory]
+INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory]
 
 
 class Game(sge.dsp.Game):
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def event_step(self, time_passed, delta_mult):
-        print(Ball.ball_count_in_room())
-
         self.project_sprite(hud_sprite, 0, self.width / 2, 0)
 
     def event_key_press(self, key, char):
@@ -86,15 +51,15 @@ class Game(sge.dsp.Game):
             self.fullscreen = not self.fullscreen
         elif key == 'escape':
             self.event_close()
-        elif key == 'a':
-            inventory = random.choice(INVENTORY_CLASSES)()
-            sge.game.start_room.add(inventory)
         elif key in ('p', 'enter'):
             if game_in_progress:
                 self.pause()
             else:
                 game_in_progress = True
                 self.current_room.start()
+        elif key == 'a':
+            inventory = random.choice(INVENTORY_CLASSES)()
+            sge.game.current_room.add(inventory)
 
     def event_close(self):
         self.end()
@@ -117,29 +82,22 @@ class Player(sge.dsp.Object):
 
     score = 0
 
-    def __init__(self, index):
-        self.index = index
-        self.inventories = []
-
-        if index == 0:
+    def __init__(self, player):
+        y = sge.game.height / 2
+        if player == 1:
             self.joystick = 0
             self.up_key = "w"
             self.down_key = "s"
             x = PADDLE_XOFFSET
             self.hit_direction = 1
+            super().__init__(x, y, sprite=paddle_sprite, checks_collisions=False)
         else:
             self.joystick = 1
             self.up_key = "up"
             self.down_key = "down"
             x = sge.game.width - PADDLE_XOFFSET
             self.hit_direction = -1
-
-        y = sge.game.height / 2
-
-        sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
-        sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color("white"))
-
-        super().__init__(x, y, sprite=sprite, checks_collisions=False)
+            super().__init__(x, y, sprite=paddle_sprite2, checks_collisions=False)
 
     def event_create(self):
         self.score = 0
@@ -152,12 +110,8 @@ class Player(sge.dsp.Object):
                       sge.keyboard.get_pressed(self.up_key))
         axis_motion = sge.joystick.get_axis(self.joystick, 1)
 
-        print("axis_motion: " + str(axis_motion))
-        print("key_motion: " + str(key_motion))
-        print("trackball_motion: " + str(self.trackball_motion))
-
         if (abs(axis_motion) > abs(key_motion) and
-            abs(axis_motion) > abs(self.trackball_motion)):
+                abs(axis_motion) > abs(self.trackball_motion)):
             self.yvelocity = axis_motion * PADDLE_SPEED
         elif abs(self.trackball_motion) > abs(key_motion):
             self.yvelocity = self.trackball_motion * PADDLE_SPEED
@@ -179,14 +133,10 @@ class Player(sge.dsp.Object):
 
 class Ball(sge.dsp.Object):
 
-    @staticmethod
-    def ball_count_in_room():
-        return len([x for x in sge.game.current_room.objects if isinstance(x, Ball)])
-
-    def __init__(self, sprite):
+    def __init__(self):
         x = sge.game.width / 2
         y = sge.game.height / 2
-        super().__init__(x, y, sprite=sprite)
+        super().__init__(x, y, sprite=ball_sprite)
 
     def event_create(self):
         self.serve()
@@ -197,19 +147,12 @@ class Ball(sge.dsp.Object):
             players[1].score += 1
             refresh_hud()
             score_sound.play()
-            if Ball.ball_count_in_room() > 1:
-                self.destroy()
-            else:
-                self.serve(-1)
-
+            self.serve(-1)
         elif self.bbox_left > sge.game.current_room.width:
             players[0].score += 1
             refresh_hud()
             score_sound.play()
-            if Ball.ball_count_in_room() > 1:
-                self.destroy()
-            else:
-                self.serve(1)
+            self.serve(1)
 
         # Bouncing off of the edges
         if self.bbox_bottom > sge.game.current_room.height:
@@ -230,28 +173,35 @@ class Ball(sge.dsp.Object):
 
             self.xvelocity = min(abs(self.xvelocity) + BALL_ACCELERATION,
                                  BALL_MAX_SPEED) * other.hit_direction
-            self.yvelocity += (self.y - other.y) * PADDLE_VERTICAL_FORCE
-
-            # updating the last player on ball, so that it will know who to add the invetory if collided with
-            self.last_player_index = other.index
-
+            self.yvelocity += (self.y - other.y) * PADDLE_VERTICAL_FORCE * (48/other.bbox_height)
             bounce_sound.play()
-        elif isinstance(other, Inventory):
+        elif isinstance(other, ShrinkPaddleInventory):
             bounce_sound.play()
-            other.activate(self.last_player_index)
+            if self.xvelocity < 0:
+                indx = 1
+            elif self.xvelocity > 0:
+                indx = 0
+            if players[indx].bbox_height > 15:
+                players[indx].sprite.height -= 15
+                players[indx].bbox_height -= 15
+            else:
+                players[indx].sprite.height, players[indx].bbox_height = 1, 1
             other.destroy()
-
+        elif isinstance(other, GrowPaddleInventory):
+            bounce_sound.play()
+            if self.xvelocity < 0:
+                indx = 0
+            elif self.xvelocity > 0:
+                indx = 1
+            players[indx].sprite.height += 15
+            players[indx].bbox_height += 15
+            other.destroy()
 
     def serve(self, direction=None):
         global game_in_progress
 
         if direction is None:
             direction = random.choice([-1, 1])
-
-        if direction == -1:
-            self.last_player_index = 0
-        else:
-            self.last_player_index = 1
 
         self.x = self.xstart
         self.y = self.ystart
@@ -270,7 +220,7 @@ class Ball(sge.dsp.Object):
             p1text = "WIN" if players[0].score > players[1].score else "LOSE"
             p2text = "WIN" if players[1].score > players[0].score else "LOSE"
             hud_sprite.draw_text(hud_font, p1text, x - TEXT_OFFSET,
-                                 TEXT_OFFSET, color=sge.gfx.Color("red"),
+                                 TEXT_OFFSET, color=sge.gfx.Color("white"),
                                  halign="right", valign="top")
             hud_sprite.draw_text(hud_font, p2text, x + TEXT_OFFSET,
                                  TEXT_OFFSET, color=sge.gfx.Color("white"),
@@ -281,7 +231,7 @@ class Ball(sge.dsp.Object):
 def create_room():
     global players
     players = [Player(0), Player(1)]
-    ball = Ball(ball_sprite)
+    ball = Ball()
     return sge.dsp.Room([players[0], players[1], ball], background=background)
 
 
@@ -290,10 +240,10 @@ def refresh_hud():
     hud_sprite.draw_clear()
     x = hud_sprite.width / 2
     hud_sprite.draw_text(hud_font, str(players[0].score), x - TEXT_OFFSET,
-                         TEXT_OFFSET, color=sge.gfx.Color("red"),
+                         TEXT_OFFSET, color=sge.gfx.Color("white"),
                          halign="right", valign="top")
     hud_sprite.draw_text(hud_font, str(players[1].score), x + TEXT_OFFSET,
-                         TEXT_OFFSET, color=sge.gfx.Color("red"),
+                         TEXT_OFFSET, color=sge.gfx.Color("white"),
                          halign="left", valign="top")
 
 
@@ -301,17 +251,19 @@ def refresh_hud():
 Game(width=640, height=480, fps=120, window_text="Pong")
 
 # Load sprites
-line_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
-line_sprite.draw_rectangle(0, 0, line_sprite.width, line_sprite.height,
-                             fill=sge.gfx.Color("white"))
-
+paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
+paddle_sprite2 = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
+paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
+                             fill=sge.gfx.Color("white"))
+paddle_sprite2.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
+                              fill=sge.gfx.Color("white"))
 ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,
                            fill=sge.gfx.Color("white"))
 hud_sprite = sge.gfx.Sprite(width=320, height=120, origin_x=160, origin_y=0)
 
 # Load backgrounds
-layers = [sge.gfx.BackgroundLayer(line_sprite, sge.game.width / 2, 0, -10000,
+layers = [sge.gfx.BackgroundLayer(paddle_sprite, sge.game.width / 2, 0, -10000,
                                   repeat_up=True, repeat_down=True)]
 background = sge.gfx.Background(layers, sge.gfx.Color("black"))
 
@@ -322,7 +274,6 @@ hud_font = sge.gfx.Font("Droid Sans Mono", size=48)
 bounce_sound = sge.snd.Sound(os.path.join(DATA, 'bounce.wav'))
 bounce_wall_sound = sge.snd.Sound(os.path.join(DATA, 'bounce_wall.wav'))
 score_sound = sge.snd.Sound(os.path.join(DATA, 'score.wav'))
-scream_sound = sge.snd.Sound(os.path.join(DATA, 'scream.wav'))
 
 # Create rooms
 sge.game.start_room = create_room()

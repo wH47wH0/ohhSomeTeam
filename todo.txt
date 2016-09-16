@@ -1,0 +1,5 @@
+- random elements on the full screen
+- map keys to thedoboz
+- find out the final resolution
+- implement the screaming lady and it's sound
+- fix multiball issue, so that the other player will get the balls, not the one who has lost the last one

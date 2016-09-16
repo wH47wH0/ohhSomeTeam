@@ -19,8 +19,10 @@ class Inventory(sge.dsp.Object):
     def __init__(self):
         sprite = sge.gfx.Sprite(width=20, height=20, origin_x=4, origin_y=4)
         sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color(self.color))
-
         super().__init__(0, 0, sprite=sprite)
+
+        self.x = random.randint(300,600)
+        self.y = random.randint(200,400)
 
     def event_create(self):
         pass
@@ -32,6 +34,9 @@ class Inventory(sge.dsp.Object):
         if isinstance(other, Ball):
             bounce_sound.play()
             self.destroy()
+
+    def activate():
+        raise NotImplementedError
 
 
 class ShrinkInventory(Inventory):
@@ -71,8 +76,6 @@ class Game(sge.dsp.Game):
             self.event_close()
         elif key == 'a':
             inventory = random.choice(INVENTORY_CLASSES)()
-            inventory.x = random.randint(0,200)
-            inventory.y = random.randint(0,200)
             sge.game.start_room.add(inventory)
         elif key in ('p', 'enter'):
             if game_in_progress:

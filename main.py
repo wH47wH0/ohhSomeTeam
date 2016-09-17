@@ -71,6 +71,26 @@ class Game(sge.dsp.Game):
             inventory = random.choice(INVENTORY_CLASSES)()
             sge.game.current_room.add(inventory)
             self.tm = curr_time
+        # if sge.joystick.get_pressed(players[0].joystick, 1) and players[0].scare > 0:
+        #     if self.right == 0:
+        #         scary_sound.play()
+        #         self.right = int(time.time())
+        #         players[0].scare -= 1
+        # if sge.joystick.get_pressed(players[1].joystick, 1) and players[1].scare > 0:
+        #     if self.left == 0:
+        #         scary_sound.play()
+        #         self.left = int(time.time())
+        #         players[1].scare -= 1
+
+    def event_joystick_button_press(js_name, js_id, button):
+        if js_id == 0 and button = 2 and players[0].scare > 0:
+            scary_sound.play()
+            self.right = int(time.time())
+            players[0].scare -= 1
+        if js_id == 1 and button = 2 and players[1].scare > 0:
+            scary_sound.play()
+            self.left = int(time.time())
+            players[1].scare -= 1
 
     def event_key_press(self, key, char):
         global game_in_progress
@@ -189,6 +209,18 @@ class Ball(sge.dsp.Object):
     def event_create(self):
         self.serve()
 
+    def event_joystick_button_press(js_name, js_id, button):
+        if js_id == 0 and button = 1 and players[0].dir > 0:
+            if self.xvelocity < 0 and self.yvelocity != 0:
+                dirchange_sound.play()
+                self.yvelocity = 0-self.yvelocity
+                players[0].dir_change -= 1
+        if js_id == 1 and button = 1 and players[1].scare > 0:
+            if self.xvelocity > 0 and self.yvelocity != 0:
+                dirchange_sound.play()
+                self.yvelocity = 0-self.yvelocity
+                players[1].dir_change -= 1
+
     def event_key_press(self, key, char):
         if key == "c" and players[0].dir_change > 0:
             if self.xvelocity < 0 and self.yvelocity != 0:
@@ -231,17 +263,17 @@ class Ball(sge.dsp.Object):
             bounce_wall_sound.play()
 
         # Speedup the ball
-        if sge.keyboard.get_pressed("2") and players[0].speed_duration > 0 or sge.keyboard.get_pressed("1") and players[1].speed_duration > 0:
+        if sge.joystick.get_pressed(players[0].joystick, 0) and players[0].speed_duration > 0 or sge.joystick.get_pressed(players[1].joystick, 0) and players[1].speed_duration > 0:
             if not self.reset_speed:
                 if self.xvelocity > 0:
                     self.xvelocity = BALL_MAX_SPEED
                 else:
                     self.xvelocity = 0-BALL_MAX_SPEED
                 self.reset_speed = True
-            if sge.keyboard.get_pressed("2"):
+            if sge.joystick.get_pressed(players[0].joystick, 0):
                 players[0].speed_duration -= 1
                 speed_sound.play()
-            if sge.keyboard.get_pressed("1"):
+            if sge.joystick.get_pressed(players[1].joystick, 1):
                 players[1].speed_duration -= 1
                 speed_sound.play()
         else:

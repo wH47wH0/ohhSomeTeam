@@ -274,19 +274,24 @@ class Ball(sge.dsp.Object):
             bounce_wall_sound.play()
 
         # Speedup the ball
-        if sge.joystick.get_pressed(players[0].joystick, 0) and players[0].speed_duration > 0 or sge.joystick.get_pressed(players[1].joystick, 0) and players[1].speed_duration > 0:
+        if sge.joystick.get_pressed(players[0].joystick, 0) and players[0].speed_duration > 0:
             if not self.reset_speed:
                 if self.xvelocity > 0:
                     self.xvelocity = BALL_MAX_SPEED
                 else:
                     self.xvelocity = 0-BALL_MAX_SPEED
                 self.reset_speed = True
-            if sge.joystick.get_pressed(players[0].joystick, 0):
-                players[0].speed_duration -= 1
-                speed_sound.play()
-            if sge.joystick.get_pressed(players[1].joystick, 1):
-                players[1].speed_duration -= 1
-                speed_sound.play()
+            speed_sound.play()
+            players[0].speed_duration -= 1
+        elif sge.joystick.get_pressed(players[1].joystick, 0) and players[1].speed_duration > 0:
+            if not self.reset_speed:
+                if self.xvelocity > 0:
+                    self.xvelocity = BALL_MAX_SPEED
+                else:
+                    self.xvelocity = 0-BALL_MAX_SPEED
+                self.reset_speed = True
+            players[1].speed_duration -= 1
+            speed_sound.play()
         else:
             if self.reset_speed:
                 if self.xvelocity > 0:

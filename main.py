@@ -83,7 +83,7 @@ class Game(sge.dsp.Game):
         #         self.left = int(time.time())
         #         players[1].scare -= 1
 
-    def event_joystick_button_press(js_name, js_id, button):
+    def event_joystick_button_press(self, js_name, js_id, button):
         if js_id == 0 and button == 2 and players[0].scare > 0:
             scary_sound.play()
             self.right = int(time.time())
@@ -226,7 +226,7 @@ class Ball(sge.dsp.Object):
     def event_create(self):
         self.serve()
 
-    def event_joystick_button_press(js_name, js_id, button):
+    def event_joystick_button_press(self, js_name, js_id, button):
         if js_id == 0 and button == 1 and players[0].dir > 0:
             if self.xvelocity < 0 and self.yvelocity != 0:
                 dirchange_sound.play()

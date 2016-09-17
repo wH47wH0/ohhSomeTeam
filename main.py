@@ -415,7 +415,6 @@ Game(width=1280, height=1024, fps=120, window_text="Pong")
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
 scary_sprite = sge.gfx.Sprite("scary", "data")
-scary_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
 paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
                              fill=sge.gfx.Color("white"))
 ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,

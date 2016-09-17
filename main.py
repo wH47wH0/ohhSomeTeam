@@ -6,7 +6,7 @@ DATA = os.path.join(os.path.dirname(__file__), "data")
 PADDLE_XOFFSET = 32
 PADDLE_SPEED = 4
 PADDLE_VERTICAL_FORCE = 1 / 12
-BALL_START_SPEED = 5
+BALL_START_SPEED = 2
 BALL_ACCELERATION = 0.2
 BALL_MAX_SPEED = 15
 POINTS_TO_WIN = 10
@@ -64,7 +64,11 @@ class AccelarateBallInvantory(Inventory):
 
     color = "green"
 
-INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory, MultipleBallInventory]
+class DirectionChangeInventory(Inventory):
+
+    color = "#4dffff"
+
+INVENTORY_CLASSES = [DirectionChangeInventory]
 
 
 class Game(sge.dsp.Game):
@@ -120,6 +124,7 @@ class Player(sge.dsp.Object):
     def __init__(self, index):
         self.index = index
         self.inventories = []
+        self.direction_change = 0
 
         if index == 0:
             self.joystick = 0
@@ -152,9 +157,9 @@ class Player(sge.dsp.Object):
                       sge.keyboard.get_pressed(self.up_key))
         axis_motion = sge.joystick.get_axis(self.joystick, 1)
 
-        print("axis_motion: " + str(axis_motion))
-        print("key_motion: " + str(key_motion))
-        print("trackball_motion: " + str(self.trackball_motion))
+        # print("axis_motion: " + str(axis_motion))
+        # print("key_motion: " + str(key_motion))
+        # print("trackball_motion: " + str(self.trackball_motion))
 
         if (abs(axis_motion) > abs(key_motion) and
             abs(axis_motion) > abs(self.trackball_motion)):
@@ -236,11 +241,25 @@ class Ball(sge.dsp.Object):
             self.last_player_index = other.index
 
             bounce_sound.play()
-        elif isinstance(other, Inventory):
+        # elif isinstance(other, Inventory):
+        #     bounce_sound.play()
+        #     other.activate(self.last_player_index)
+        #     other.destroy()
+        elif isinstance(other, DirectionChangeInventory):
             bounce_sound.play()
-            other.activate(self.last_player_index)
+            if self.xvelocity > 0:
+                players[0].direction_change += 1
+            else:
+                players[1].direction_change += 1
             other.destroy()
 
+    def event_key_press(self, key, char):
+        if key == 'c' and players[0].direction_change > 0:
+            players[0].direction_change -= 1
+            self.yvelocity = 0 - self.yvelocity
+        elif key == 'kp_2' and players[1].direction_change > 0:
+            players[1].direction_change -= 1
+            self.yvelocity = 0 - self.yvelocity
 
     def serve(self, direction=None):
         global game_in_progress

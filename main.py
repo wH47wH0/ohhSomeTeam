@@ -26,7 +26,7 @@ class Inventory(sge.dsp.Object):
 
         # TODO: fix this, to be random at the whole screen
         self.x = random.randint(400, sge.game.width - 400)
-        self.y = random.randint(HUD_HEIGHT, sge.game.height - 50)
+        self.y = random.randint(HUD_HEIGHT + 50, sge.game.height - 50)
 
 
 class ShrinkPaddleInventory(Inventory):

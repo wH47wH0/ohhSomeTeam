@@ -377,6 +377,7 @@ class Ball(sge.dsp.Object):
         else:
             # Game Over!
             win_sound.play()
+            music.stop()
             self.xvelocity = 0
             self.yvelocity = 0
             hud_sprite.draw_clear()

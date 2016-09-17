@@ -352,7 +352,7 @@ def refresh_hud():
 
 
 # Create Game object
-Game(width=1280, height=1024, fps=240, window_text="Pong")
+Game(width=1280, height=1024, fps=45, window_text="Pong")
 
 # Load sprites
 central_line_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=24)

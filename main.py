@@ -1,6 +1,7 @@
 import random
 import os
 import sge
+import time
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
 PADDLE_XOFFSET = 96
@@ -23,8 +24,8 @@ class Inventory(sge.dsp.Object):
         super().__init__(0, 0, sprite=sprite, checks_collisions=False)
 
         # TODO: fix this, to be random at the whole screen
-        self.x = random.randint(300, 600)
-        self.y = random.randint(200, 400)
+        self.x = random.randint(400, sge.game.width-400)
+        self.y = random.randint(50, sge.game.height-50)
 
 
 class ShrinkPaddleInventory(Inventory):
@@ -44,24 +45,32 @@ class BallSpeedup(Inventory):
 
 
 class DirectionChanger(Inventory):
-    color = "purple"
+    color = "#cc6699"
 
-INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory, MultipleBallInventory]
+
+class ScarySht(Inventory):
+    color = "#333300"
+
+INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory, MultipleBallInventory, BallSpeedup, DirectionChanger, ScarySht]
 
 
 class Game(sge.dsp.Game):
+    tm = int(time.time())
     left = 0
     right = 0
     def event_step(self, time_passed, delta_mult):
+        curr_time = int(time.time())
         self.project_sprite(hud_sprite, 0, self.width / 2, 0)
-        if self.left > 0:
+        if self.left != 0 and curr_time-self.left < 2:
             rnd = [random.randint(0, 100), random.randint(0, 150)]
             sge.game.current_room.project_sprite(scary_sprite,0,rnd[0],rnd[1],1)
-            self.left -= 1
-        if self.right > 0:
+        if self.right != 0 and curr_time-self.right < 2:
             rnd = [random.randint(self.width-630, self.width-530), random.randint(0, 150)]
             sge.game.current_room.project_sprite(scary_sprite,0,rnd[0],rnd[1],1)
-            self.right -= 1
+        if curr_time-self.tm == 5:
+            inventory = random.choice(INVENTORY_CLASSES)()
+            sge.game.current_room.add(inventory)
+            self.tm = curr_time
 
     def event_key_press(self, key, char):
         global game_in_progress
@@ -81,12 +90,14 @@ class Game(sge.dsp.Game):
         elif key == 'a':
             inventory = random.choice(INVENTORY_CLASSES)()
             sge.game.current_room.add(inventory)
-        elif key == "u":
-            self.left += 100
+        elif key == "u" and players[1].scare > 0:
+            self.left = int(time.time())
             scary_sound.play()
-        elif key == "j":
-            self.right += 100
+            players[1].scare -= 1
+        elif key == "j" and players[0].scare > 0:
+            self.right = int(time.time())
             scary_sound.play()
+            players[0].scare -= 1
 
     def event_close(self):
         self.end()
@@ -111,8 +122,9 @@ class Player(sge.dsp.Object):
 
     def __init__(self, player):
         y = sge.game.height / 2
-        self.speed_duration = 0
+        self.speed_duration = 100
         self.dir_change = 3
+        self.scare = 1
         if player == 1:
             self.joystick = 0
             self.up_key = "w"
@@ -180,10 +192,12 @@ class Ball(sge.dsp.Object):
     def event_key_press(self, key, char):
         if key == "c" and players[0].dir_change > 0:
             if self.xvelocity < 0 and self.yvelocity != 0:
+                dirchange_sound.play()
                 self.yvelocity = 0-self.yvelocity
                 players[0].dir_change -= 1
         if key == "3" and players[1].dir_change > 0:
             if self.xvelocity > 0 and self.yvelocity != 0:
+                dirchange_sound.play()
                 self.yvelocity = 0-self.yvelocity
                 players[1].dir_change -= 1
 
@@ -226,8 +240,10 @@ class Ball(sge.dsp.Object):
                 self.reset_speed = True
             if sge.keyboard.get_pressed("2"):
                 players[0].speed_duration -= 1
+                speed_sound.play()
             if sge.keyboard.get_pressed("1"):
                 players[1].speed_duration -= 1
+                speed_sound.play()
         else:
             if self.reset_speed:
                 if self.xvelocity > 0:
@@ -248,7 +264,7 @@ class Ball(sge.dsp.Object):
             self.yvelocity += (self.y - other.y) * PADDLE_VERTICAL_FORCE * (48/other.bbox_height)
             bounce_sound.play()
         elif isinstance(other, ShrinkPaddleInventory):
-            bounce_sound.play()
+            shrink_sound.play()
             if self.xvelocity < 0:
                 indx = 1
             elif self.xvelocity > 0:
@@ -260,7 +276,7 @@ class Ball(sge.dsp.Object):
                 players[indx].sprite.height, players[indx].bbox_height = 1, 1
             other.destroy()
         elif isinstance(other, GrowPaddleInventory):
-            bounce_sound.play()
+            grow_sound.play()
             if self.xvelocity < 0:
                 indx = 0
             elif self.xvelocity > 0:
@@ -269,7 +285,7 @@ class Ball(sge.dsp.Object):
             players[indx].bbox_height += 45
             other.destroy()
         elif isinstance(other, MultipleBallInventory):
-            bounce_sound.play()
+            multi_sound.play()
             for i in range(0, 2):
                 sge.game.current_room.add(Ball(ball_sprite))
             other.destroy()
@@ -286,6 +302,13 @@ class Ball(sge.dsp.Object):
                 players[0].dir_change += 1
             else:
                 players[1].dir_change += 1
+            other.destroy()
+        elif isinstance(other, ScarySht):
+            bounce_sound.play()
+            if self.xvelocity < 0:
+                players[0].scare += 1
+            else:
+                players[1].scare += 1
             other.destroy()
 
     def serve(self, direction=None):
@@ -304,6 +327,7 @@ class Ball(sge.dsp.Object):
             self.yvelocity = 0
         else:
             # Game Over!
+            win_sound.play()
             self.xvelocity = 0
             self.yvelocity = 0
             hud_sprite.draw_clear()
@@ -364,6 +388,12 @@ bounce_sound = sge.snd.Sound(os.path.join(DATA, 'bounce.wav'))
 bounce_wall_sound = sge.snd.Sound(os.path.join(DATA, 'bounce_wall.wav'))
 score_sound = sge.snd.Sound(os.path.join(DATA, 'score.wav'))
 scary_sound = sge.snd.Sound(os.path.join(DATA, 'scream.wav'))
+speed_sound = sge.snd.Sound(os.path.join(DATA, 'buzzaway.wav'))
+multi_sound = sge.snd.Sound(os.path.join(DATA, 'multi.wav'))
+shrink_sound = sge.snd.Sound(os.path.join(DATA, 'shrink.wav'))
+dirchange_sound = sge.snd.Sound(os.path.join(DATA, 'dirchange.wav'))
+grow_sound = sge.snd.Sound(os.path.join(DATA, 'grow.wav'))
+win_sound = sge.snd.Sound(os.path.join(DATA, 'win.wav'))
 
 # Create rooms
 sge.game.start_room = create_room()

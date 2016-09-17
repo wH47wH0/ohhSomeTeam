@@ -9,7 +9,7 @@ PADDLE_SPEED = 12
 PADDLE_VERTICAL_FORCE = 1 / 4
 BALL_START_SPEED = 6
 BALL_ACCELERATION = 0.6
-BALL_MAX_SPEED = 45
+BALL_MAX_SPEED = 35
 POINTS_TO_WIN = 10
 TEXT_OFFSET = 32
 DEBUG = True
@@ -93,10 +93,12 @@ class Game(sge.dsp.Game):
             scary_sound.play()
             self.right = int(time.time())
             players[0].scare -= 1
-        if js_id == 1 and button == 2 and players[1].scare > 0:
+            print ("player 1 scream")
+        elif js_id == 1 and button == 2 and players[1].scare > 0:
             scary_sound.play()
             self.left = int(time.time())
             players[1].scare -= 1
+            print ("player 2 scream")
 
     def event_key_press(self, key, char):
         global game_in_progress
@@ -230,7 +232,7 @@ class Ball(sge.dsp.Object):
     def event_joystick_button_press(self, js_name, js_id, button):
         if button == 1:
             if players[js_id].dir_change > 0:
-                if (js_id == 0 and self.xvelocity < 0 and self.yvelocity != 0) or (js_id == 1 and self.xvelocity > 0 and self.yvelocity != 0):
+                if (js_id == 0 and self.xvelocity > 0 and self.yvelocity != 0) or (js_id == 1 and self.xvelocity < 0 and self.yvelocity != 0):
                         dirchange_sound.play()
                         self.yvelocity = 0-self.yvelocity
                         players[js_id].dir_change -= 1
@@ -417,7 +419,7 @@ Game(width=1280, height=1024, fps=120, window_text="Pong")
 # Load sprites
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
-# scary_sprite = sge.gfx.Sprite("scary", "data")
+scary_sprite = sge.gfx.Sprite("scary", "data")
 scary_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
 paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
                              fill=sge.gfx.Color("white"))

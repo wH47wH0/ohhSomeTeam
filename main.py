@@ -5,7 +5,7 @@ import sge
 DATA = os.path.join(os.path.dirname(__file__), "data")
 PADDLE_XOFFSET = 96
 PADDLE_SPEED = 12
-PADDLE_VERTICAL_FORCE = 1 / 12
+PADDLE_VERTICAL_FORCE = 1 / 4
 BALL_START_SPEED = 6
 BALL_ACCELERATION = 0.6
 BALL_MAX_SPEED = 45

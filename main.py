@@ -24,11 +24,16 @@ class Inventory(sge.dsp.Object):
         super().__init__(0, 0, sprite=sprite, checks_collisions=False)
 
         # TODO: fix this, to be random at the whole screen
-        self.x = random.randint(300, 600)
-        self.y = random.randint(200, 400)
+        self.x = random.randint(200, 1000)
+        self.y = random.randint(200, 800)
 
     def activate(self, player_index):
         raise NotImplementedError
+
+    @staticmethod
+    def display_inventory():
+        inventory = random.choice(INVENTORY_CLASSES)()
+        sge.game.start_room.add(inventory)
 
 
 class ShrinkPaddleInventory(Inventory):
@@ -69,7 +74,7 @@ class DirectionChangeInventory(Inventory):
 
     color = "#4dffff"
 
-INVENTORY_CLASSES = [DirectionChangeInventory]
+INVENTORY_CLASSES = [DirectionChangeInventory, GrowPaddleInventory, AccelarateBallInvantory, MultipleBallInventory]
 
 
 class Game(sge.dsp.Game):
@@ -78,8 +83,6 @@ class Game(sge.dsp.Game):
         super().__init__(*args, **kwargs)
 
     def event_step(self, time_passed, delta_mult):
-        print(Ball.ball_count_in_room())
-
         self.project_sprite(hud_sprite, 0, self.width / 2, 0)
 
     def event_key_press(self, key, char):
@@ -91,15 +94,13 @@ class Game(sge.dsp.Game):
             self.fullscreen = not self.fullscreen
         elif key == 'escape':
             self.event_close()
-        elif key == 'a':
-            inventory = random.choice(INVENTORY_CLASSES)()
-            sge.game.start_room.add(inventory)
         elif key in ('p', 'enter'):
             if game_in_progress:
                 self.pause()
             else:
                 game_in_progress = True
                 self.current_room.start()
+
 
     def event_close(self):
         self.end()
@@ -227,8 +228,11 @@ class Ball(sge.dsp.Object):
             self.yvelocity = abs(self.yvelocity)
             bounce_wall_sound.play()
 
+
+
     def event_collision(self, other, xdirection, ydirection):
         if isinstance(other, Player):
+            Inventory.display_inventory()
             if other.hit_direction == 1:
                 self.bbox_left = other.bbox_right + 1
             else:
@@ -318,7 +322,7 @@ def refresh_hud():
 
 
 # Create Game object
-Game(width=1280, height=1080, fps=120, window_text="Pong")
+Game(width=1280, height=1080, fps=120, window_text="Pong", delta=True, delta_max=None)
 
 # Load sprites
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
@@ -374,7 +378,6 @@ scream_sound = sge.snd.Sound(os.path.join(DATA, 'scream.wav'))
 sge.game.start_room = create_room()
 
 sge.game.mouse.visible = False
-
 
 if __name__ == '__main__':
     sge.game.start()

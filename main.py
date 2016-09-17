@@ -3,14 +3,14 @@ import os
 import sge
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
-PADDLE_XOFFSET = 32
-PADDLE_SPEED = 4
+PADDLE_XOFFSET = 96
+PADDLE_SPEED = 12
 PADDLE_VERTICAL_FORCE = 1 / 12
-BALL_START_SPEED = 2
-BALL_ACCELERATION = 0.2
-BALL_MAX_SPEED = 15
+BALL_START_SPEED = 6
+BALL_ACCELERATION = 0.6
+BALL_MAX_SPEED = 45
 POINTS_TO_WIN = 10
-TEXT_OFFSET = 16
+TEXT_OFFSET = 32
 
 game_in_progress = True
 
@@ -18,7 +18,7 @@ game_in_progress = True
 class Inventory(sge.dsp.Object):
 
     def __init__(self):
-        sprite = sge.gfx.Sprite(width=20, height=20, origin_x=4, origin_y=4)
+        sprite = sge.gfx.Sprite(width=40, height=40, origin_x=20, origin_y=20)
         sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color(self.color))
         super().__init__(0, 0, sprite=sprite, checks_collisions=False)
 
@@ -125,7 +125,7 @@ class Player(sge.dsp.Object):
             self.down_key = "down"
             x = sge.game.width - PADDLE_XOFFSET
             self.hit_direction = -1
-        sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
+        sprite = sge.gfx.Sprite(width=24, height=144, origin_x=12, origin_y=72)
         sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color("white"))
 
         super().__init__(x, y, sprite=sprite, checks_collisions=False)
@@ -253,9 +253,9 @@ class Ball(sge.dsp.Object):
                 indx = 1
             elif self.xvelocity > 0:
                 indx = 0
-            if players[indx].bbox_height > 15:
-                players[indx].sprite.height -= 15
-                players[indx].bbox_height -= 15
+            if players[indx].bbox_height > 45:
+                players[indx].sprite.height -= 45
+                players[indx].bbox_height -= 45
             else:
                 players[indx].sprite.height, players[indx].bbox_height = 1, 1
             other.destroy()
@@ -265,8 +265,8 @@ class Ball(sge.dsp.Object):
                 indx = 0
             elif self.xvelocity > 0:
                 indx = 1
-            players[indx].sprite.height += 15
-            players[indx].bbox_height += 15
+            players[indx].sprite.height += 45
+            players[indx].bbox_height += 45
             other.destroy()
         elif isinstance(other, MultipleBallInventory):
             bounce_sound.play()
@@ -343,7 +343,7 @@ Game(width=1280, height=1024, fps=120, window_text="Pong")
 
 # Load sprites
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
-ball_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
+ball_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
 scary_sprite = sge.gfx.Sprite("scary", "data")
 paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
                              fill=sge.gfx.Color("white"))

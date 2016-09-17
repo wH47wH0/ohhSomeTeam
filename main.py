@@ -4,13 +4,14 @@ import sge
 
 DATA = os.path.join(os.path.dirname(__file__), "data")
 PADDLE_XOFFSET = 32
-PADDLE_SPEED = 4
+PADDLE_SPEED = 6
 PADDLE_VERTICAL_FORCE = 1 / 12
-BALL_START_SPEED = 2
-BALL_ACCELERATION = 0.2
-BALL_MAX_SPEED = 15
+BALL_START_SPEED = 5
+BALL_ACCELERATION = 0.5
+BALL_MAX_SPEED = 40
 POINTS_TO_WIN = 10
 TEXT_OFFSET = 16
+HUD_HEIGHT = 80
 
 game_in_progress = True
 
@@ -172,8 +173,8 @@ class Player(sge.dsp.Object):
         self.trackball_motion = 0
 
         # Keep the paddle inside the window
-        if self.bbox_top < 0:
-            self.bbox_top = 0
+        if self.bbox_top < HUD_HEIGHT + 8:
+            self.bbox_top = HUD_HEIGHT + 8
         elif self.bbox_bottom > sge.game.current_room.height:
             self.bbox_bottom = sge.game.current_room.height
 
@@ -221,8 +222,8 @@ class Ball(sge.dsp.Object):
             self.bbox_bottom = sge.game.current_room.height
             self.yvelocity = -abs(self.yvelocity)
             bounce_wall_sound.play()
-        elif self.bbox_top < 0:
-            self.bbox_top = 0
+        elif self.bbox_top < HUD_HEIGHT + 8:
+            self.bbox_top = HUD_HEIGHT + 8
             self.yvelocity = abs(self.yvelocity)
             bounce_wall_sound.play()
 
@@ -317,22 +318,48 @@ def refresh_hud():
 
 
 # Create Game object
-Game(width=640, height=480, fps=120, window_text="Pong")
+Game(width=1280, height=1080, fps=120, window_text="Pong")
 
 # Load sprites
-line_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
-line_sprite.draw_rectangle(0, 0, line_sprite.width, line_sprite.height,
-                             fill=sge.gfx.Color("white"))
-
+paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
+central_line_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=8, height=8, origin_x=4, origin_y=4)
-ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,
-                           fill=sge.gfx.Color("white"))
+inventory_line_vertical_sprite = sge.gfx.Sprite(width=4, height=80, origin_x=4, origin_y=4)
+inventory_line_horizontal_sprite = sge.gfx.Sprite(width=200, height=4, origin_x=4, origin_y=4)
 hud_sprite = sge.gfx.Sprite(width=320, height=120, origin_x=160, origin_y=0)
 
+paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
+                             fill=sge.gfx.Color("#AFFF00"))
+central_line_sprite.draw_rectangle(0, 0, central_line_sprite.width, central_line_sprite.height,
+                                   fill=sge.gfx.Color("red"))
+ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,
+                           fill=sge.gfx.Color("#AFFF00"))
+inventory_line_vertical_sprite.draw_rectangle(0, 0, inventory_line_vertical_sprite.width,
+                                              inventory_line_vertical_sprite.height, fill=sge.gfx.Color("red"))
+inventory_line_horizontal_sprite.draw_rectangle(0, 0, inventory_line_horizontal_sprite.width,
+                                                inventory_line_horizontal_sprite.height, fill=sge.gfx.Color("red"))
+
 # Load backgrounds
-layers = [sge.gfx.BackgroundLayer(line_sprite, sge.game.width / 2, 0, -10000,
-                                  repeat_up=True, repeat_down=True)]
-background = sge.gfx.Background(layers, sge.gfx.Color("black"))
+layers = []
+lines_x_long = [4, 54, 104, 154, 204, sge.game.width, sge.game.width-50, sge.game.width-100, sge.game.width-150,
+                sge.game.width-200]
+lines_x_short = []
+for i in lines_x_long:
+    layer = sge.gfx.BackgroundLayer(inventory_line_vertical_sprite, i, 4, -10000)
+    layers.append(layer)
+for i in lines_x_short:
+    layer = sge.gfx.BackgroundLayer(inventory_line_vertical_sprite, i, 4, -10000)
+    layers.append(layer)
+
+layers.append(sge.gfx.BackgroundLayer(inventory_line_horizontal_sprite, 4, 46, -10000))
+layers.append(sge.gfx.BackgroundLayer(inventory_line_horizontal_sprite,
+                                      sge.game.width - inventory_line_horizontal_sprite.width, 46, -10000))
+layers.append(sge.gfx.BackgroundLayer(central_line_sprite, sge.game.width / 2, 0, -10000,
+                                      repeat_up=True, repeat_down=True))
+layers.append(sge.gfx.BackgroundLayer(central_line_sprite, 0, HUD_HEIGHT + 24, -10000, repeat_right=True))
+layers.append(sge.gfx.BackgroundLayer(central_line_sprite, 0, 24, -10000, repeat_right=True))
+background = sge.gfx.Background(layers, sge.gfx.Color("#4B0082"))
+
 
 # Load fonts
 hud_font = sge.gfx.Font("Droid Sans Mono", size=48)

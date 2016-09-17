@@ -12,6 +12,7 @@ BALL_ACCELERATION = 0.6
 BALL_MAX_SPEED = 45
 POINTS_TO_WIN = 10
 TEXT_OFFSET = 32
+DEBUG = True
 
 game_in_progress = True
 
@@ -100,9 +101,18 @@ class Game(sge.dsp.Game):
             players[0].scare -= 1
 
     def event_joystick_button_press(self, js_name, js_id, button):
-        print("js_name: " + str(js_name))
-        print("js_id: " + str(js_id))
-        print("button: " + str(button))
+        debug("js_name: " + str(js_name))
+        debug("js_id: " + str(js_id))
+        debug("button: " + str(button))
+
+        if button == 10:
+            if game_in_progress:
+                self.pause()
+            else:
+                game_in_progress = True
+                self.current_room.start()
+        elif button == 11:
+            self.fullscreen = not self.fullscreen
 
     def event_close(self):
         self.end()
@@ -366,6 +376,9 @@ def refresh_hud():
                          TEXT_OFFSET, color=sge.gfx.Color("white"),
                          halign="left", valign="top")
 
+def debug(message):
+    if DEBUG is True:
+        print(message)
 
 # Create Game object
 Game(width=1280, height=1024, fps=120, window_text="Pong")

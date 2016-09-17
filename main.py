@@ -20,8 +20,7 @@ game_in_progress = True
 class Inventory(sge.dsp.Object):
 
     def __init__(self):
-        sprite = sge.gfx.Sprite(width=40, height=40, origin_x=20, origin_y=20)
-        sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color(self.color))
+        sprite = sge.gfx.Sprite(self.imag, "data", origin_x=20, origin_y=20)
         super().__init__(0, 0, sprite=sprite, checks_collisions=False)
 
         # TODO: fix this, to be random at the whole screen
@@ -30,27 +29,27 @@ class Inventory(sge.dsp.Object):
 
 
 class ShrinkPaddleInventory(Inventory):
-    color = "red"
+    imag = "shrink"
 
 
 class GrowPaddleInventory(Inventory):
-    color = "blue"
+    imag = "grow"
 
 
 class MultipleBallInventory(Inventory):
-    color = "yellow"
+    imag = "multi"
 
 
 class BallSpeedup(Inventory):
-    color = "green"
+    imag = "speed"
 
 
 class DirectionChanger(Inventory):
-    color = "#cc6699"
+    imag = "dirchange"
 
 
 class ScarySht(Inventory):
-    color = "#333300"
+    imag = "scary"
 
 INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory, MultipleBallInventory, BallSpeedup, DirectionChanger, ScarySht]
 

@@ -83,23 +83,6 @@ class Game(sge.dsp.Game):
         #         self.left = int(time.time())
         #         players[1].scare -= 1
 
-    def event_joystick_button_press(self, js_name, js_id, button):
-        debug("js_id: " + str(js_id))
-        debug("button: " + str(button))
-        debug("players[0].scare: " + str(players[0].scare))
-        debug("players[1].scare: " + str(players[1].scare))
-
-        if js_id == 0 and button == 2 and players[0].scare > 0:
-            scary_sound.play()
-            self.right = int(time.time())
-            players[0].scare -= 1
-            print ("player 1 scream")
-        elif js_id == 1 and button == 2 and players[1].scare > 0:
-            scary_sound.play()
-            self.left = int(time.time())
-            players[1].scare -= 1
-            print ("player 2 scream")
-
     def event_key_press(self, key, char):
         global game_in_progress
 
@@ -128,6 +111,11 @@ class Game(sge.dsp.Game):
             players[0].scare -= 1
 
     def event_joystick_button_press(self, js_name, js_id, button):
+        debug("js_id: " + str(js_id))
+        debug("button: " + str(button))
+        debug("players[0].scare: " + str(players[0].scare))
+        debug("players[1].scare: " + str(players[1].scare))
+
         global game_in_progress
 
         if button == 10:
@@ -138,6 +126,13 @@ class Game(sge.dsp.Game):
                 self.current_room.start()
         elif button == 11:
             self.fullscreen = not self.fullscreen
+        elif button == 2 and players[js_id].scare > 0:
+            scary_sound.play()
+            if js_id == 0:
+                self.right = int(time.time())
+            else:
+                self.left = int(time.time())
+            players[js_id].scare -= 1
 
     def event_close(self):
         self.end()

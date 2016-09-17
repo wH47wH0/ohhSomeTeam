@@ -13,6 +13,7 @@ BALL_MAX_SPEED = 35
 POINTS_TO_WIN = 10
 TEXT_OFFSET = 32
 DEBUG = True
+HUD_HEIGHT = 100
 
 game_in_progress = True
 
@@ -24,8 +25,8 @@ class Inventory(sge.dsp.Object):
         super().__init__(0, 0, sprite=sprite, checks_collisions=False)
 
         # TODO: fix this, to be random at the whole screen
-        self.x = random.randint(400, sge.game.width-400)
-        self.y = random.randint(50, sge.game.height-50)
+        self.x = random.randint(400, sge.game.width - 400)
+        self.y = random.randint(HUD_HEIGHT, sge.game.height - 50)
 
 
 class ShrinkPaddleInventory(Inventory):
@@ -172,7 +173,7 @@ class Player(sge.dsp.Object):
             x = sge.game.width - PADDLE_XOFFSET
             self.hit_direction = -1
         sprite = sge.gfx.Sprite(width=24, height=144, origin_x=12, origin_y=72)
-        sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color("white"))
+        sprite.draw_rectangle(0, 0, sprite.width, sprite.height, fill=sge.gfx.Color("#00FFDD"))
 
         super().__init__(x, y, sprite=sprite, checks_collisions=False)
 
@@ -198,8 +199,8 @@ class Player(sge.dsp.Object):
         self.trackball_motion = 0
 
         # Keep the paddle inside the window
-        if self.bbox_top < 0:
-            self.bbox_top = 0
+        if self.bbox_top < HUD_HEIGHT:
+            self.bbox_top = HUD_HEIGHT
         elif self.bbox_bottom > sge.game.current_room.height:
             self.bbox_bottom = sge.game.current_room.height
 
@@ -267,8 +268,8 @@ class Ball(sge.dsp.Object):
             self.bbox_bottom = sge.game.current_room.height
             self.yvelocity = -abs(self.yvelocity)
             bounce_wall_sound.play()
-        elif self.bbox_top < 0:
-            self.bbox_top = 0
+        elif self.bbox_top < HUD_HEIGHT:
+            self.bbox_top = HUD_HEIGHT
             self.yvelocity = abs(self.yvelocity)
             bounce_wall_sound.play()
 
@@ -400,13 +401,17 @@ def create_room():
 def refresh_hud():
     # This fixes the HUD sprite so that it displays the correct score.
     hud_sprite.draw_clear()
-    x = hud_sprite.width / 2
+    x = sge.game.current_room.width / 2
     hud_sprite.draw_text(hud_font, str(players[0].score), x - TEXT_OFFSET,
-                         TEXT_OFFSET, color=sge.gfx.Color("white"),
+                         TEXT_OFFSET, color=sge.gfx.Color("#FF0022"),
                          halign="right", valign="top")
     hud_sprite.draw_text(hud_font, str(players[1].score), x + TEXT_OFFSET,
-                         TEXT_OFFSET, color=sge.gfx.Color("white"),
+                         TEXT_OFFSET, color=sge.gfx.Color("#FF0022"),
                          halign="left", valign="top")
+    hud_sprite.draw_text(hud_text_font, "SPEED BOOST: {}".format(players[0].speed_duration), TEXT_OFFSET,
+                         TEXT_OFFSET / 1.5, halign="left", valign="top", color=sge.gfx.Color("#FF0022"))
+    hud_sprite.draw_text(hud_text_font, "SPEED BOOST: {}".format(players[1].speed_duration), x * 2 -
+                         TEXT_OFFSET, TEXT_OFFSET / 1.5, halign="right", valign="top", color=sge.gfx.Color("#FF0022"))
 
 def debug(message):
     if DEBUG is True:
@@ -419,19 +424,27 @@ Game(width=1280, height=1024, fps=120, window_text="Pong")
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
 scary_sprite = sge.gfx.Sprite("scary", "data")
-paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
-                             fill=sge.gfx.Color("white"))
-ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,
-                           fill=sge.gfx.Color("white"))
-hud_sprite = sge.gfx.Sprite(width=320, height=120, origin_x=160, origin_y=0)
+hud_line = sge.gfx.Sprite(width=8, height=8, origin_x=0, origin_y=0)
+hud_half_line = sge.gfx.Sprite(width=12, height=HUD_HEIGHT, origin_x=0, origin_y=0)
+
+hud_line.draw_rectangle(0, 0, hud_line.width, hud_line.height, sge.gfx.Color("#A2FF00"))
+hud_line.draw_rectangle(0, 0, hud_line.width, hud_line.height, sge.gfx.Color("#A2FF00"))
+hud_half_line.draw_rectangle(0, 0, hud_half_line.width, hud_half_line.height, fill=sge.gfx.Color("#A2FF00"))
+paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height, fill=sge.gfx.Color("#00FFDD"))
+ball_sprite.draw_circle(0, 0, 32, fill=sge.gfx.Color("#5D00FF"), outline=sge.gfx.Color("white"))
+hud_sprite = sge.gfx.Sprite(width=1280, height=120, origin_x=640, origin_y=0)
 
 # Load backgrounds
 layers = [sge.gfx.BackgroundLayer(paddle_sprite, sge.game.width / 2, 0, -10000,
-                                  repeat_up=True, repeat_down=True)]
+                                  repeat_up=True, repeat_down=True),
+          sge.gfx.BackgroundLayer(hud_line, 0, HUD_HEIGHT - 8, repeat_right=True, repeat_left=True),
+          sge.gfx.BackgroundLayer(hud_line, 0, 0, repeat_right=True, repeat_left=True),
+          sge.gfx.BackgroundLayer(hud_half_line, sge.game.width / 2 - 6, 0)]
 background = sge.gfx.Background(layers, sge.gfx.Color("black"))
 
 # Load fonts
-hud_font = sge.gfx.Font("Droid Sans Mono", size=48)
+hud_font = sge.gfx.Font("Droid Sans Mono", size=48, bold=True)
+hud_text_font = sge.gfx.Font("Droid Sans Mono", size=18)
 
 # Load sounds
 bounce_sound = sge.snd.Sound(os.path.join(DATA, 'bounce.wav'))

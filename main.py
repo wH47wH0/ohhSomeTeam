@@ -391,6 +391,7 @@ class Ball(sge.dsp.Object):
                                  TEXT_OFFSET, color=sge.gfx.Color("white"),
                                  halign="left", valign="top")
             game_in_progress = False
+            Game.event_close()
 
 
 def create_room():

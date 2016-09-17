@@ -99,6 +99,11 @@ class Game(sge.dsp.Game):
             scary_sound.play()
             players[0].scare -= 1
 
+    def event_joystick_button_press(self, js_name, js_id, button):
+        print("js_name: " + str(js_name))
+        print("js_id: " + str(js_id))
+        print("button: " + str(button))
+
     def event_close(self):
         self.end()
 
@@ -368,7 +373,8 @@ Game(width=1280, height=1024, fps=120, window_text="Pong")
 # Load sprites
 paddle_sprite = sge.gfx.Sprite(width=8, height=48, origin_x=4, origin_y=24)
 ball_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
-scary_sprite = sge.gfx.Sprite("scary", "data")
+# scary_sprite = sge.gfx.Sprite("scary", "data")
+scary_sprite = sge.gfx.Sprite(width=16, height=16, origin_x=8, origin_y=8)
 paddle_sprite.draw_rectangle(0, 0, paddle_sprite.width, paddle_sprite.height,
                              fill=sge.gfx.Color("white"))
 ball_sprite.draw_rectangle(0, 0, ball_sprite.width, ball_sprite.height,

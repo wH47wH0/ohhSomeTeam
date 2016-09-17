@@ -50,7 +50,7 @@ class DirectionChanger(Inventory):
 
 
 class ScarySht(Inventory):
-    imag = "scary"
+    imag = "scare"
 
 INVENTORY_CLASSES = [ShrinkPaddleInventory, GrowPaddleInventory, MultipleBallInventory, BallSpeedup, DirectionChanger, ScarySht]
 

@@ -86,9 +86,9 @@ class Game(sge.dsp.Game):
     def event_joystick_button_press(self, js_name, js_id, button):
         debug("js_id: " + str(js_id))
         debug("button: " + str(button))
-        debug("players[0].scare: " str(players[0].scare))
-        debug("players[1].scare: " str(players[1].scare))
-        
+        debug("players[0].scare: " + str(players[0].scare))
+        debug("players[1].scare: " + str(players[1].scare))
+
         if js_id == 0 and button == 2 and players[0].scare > 0:
             scary_sound.play()
             self.right = int(time.time())
@@ -127,10 +127,6 @@ class Game(sge.dsp.Game):
 
     def event_joystick_button_press(self, js_name, js_id, button):
         global game_in_progress
-
-        debug("js_name: " + str(js_name))
-        debug("js_id: " + str(js_id))
-        debug("button: " + str(button))
 
         if button == 10:
             if game_in_progress:

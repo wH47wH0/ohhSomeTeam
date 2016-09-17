@@ -101,6 +101,8 @@ class Game(sge.dsp.Game):
             players[0].scare -= 1
 
     def event_joystick_button_press(self, js_name, js_id, button):
+        global game_in_progress
+
         debug("js_name: " + str(js_name))
         debug("js_id: " + str(js_id))
         debug("button: " + str(button))
